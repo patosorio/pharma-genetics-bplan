@@ -12,6 +12,10 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import our models
 from src.core.db import Base
+# Import all models so Alembic can detect them for autogenerate
+from src.models.income import Income  # noqa: F401
+from src.models.expenses import Expense, ExpenseCategory  # noqa: F401
+from src.models.pending_investments import PendingInvestment  # noqa: F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

@@ -45,6 +45,12 @@ dmypy.json
 *.sqlite
 *.sqlite3
 *.db-journal
+*.db-shm
+*.db-wal
+
+# Alembic
+# Migration files in alembic/versions/ should be committed
+# Cache files are already covered by __pycache__/ above
 
 # Logs
 *.log
