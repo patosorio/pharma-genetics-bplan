@@ -6,7 +6,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from .core.shared.exceptions_handler import setup_exception_handlers
-from .core.db import Base, engine, init_db
+from .core.db import init_db
+from src.api.v1.router import router
 
 load_dotenv()
 
@@ -69,6 +70,9 @@ async def health_check():
         "version": "1.0.0",
         "environment": os.getenv("ENV", "development")
     }
+
+# Routers
+app.include_router(router)
 
 # Error handling verification endpoint (development only)
 if os.getenv("ENV", "development") == "development":

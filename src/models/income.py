@@ -29,8 +29,11 @@ class Income(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    # Core document data
-    doc_no = Column(String, unique=True, nullable=False, index=True)
+    # Stable row identifier from spreadsheet
+    row_id = Column(String, unique=True, nullable=True, index=True)
+
+    # Core document data (same invoice can have multiple lines)
+    doc_no = Column(String, nullable=False, index=True)
     doc_date = Column(Date, nullable=False, index=True)
     customer = Column(String, nullable=False)
     currency = Column(String(3), nullable=False, default="THB")

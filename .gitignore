@@ -13,6 +13,12 @@ env.bak/
 venv.bak/
 .venv/
 
+# Google API & Service Account Credentials
+**/*service*account*.json
+**/*credentials*.json
+**/*-serviceaccount.json
+**/*-credentials.json
+src/core/googleapi/*.json
 # Environment variables
 .env
 .env.local

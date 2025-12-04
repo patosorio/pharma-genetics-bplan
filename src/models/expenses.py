@@ -51,8 +51,11 @@ class Expense(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    # Document info
-    doc_no = Column(String, unique=True, nullable=False, index=True)
+    # Stable row identifier from spreadsheet
+    row_id = Column(String, unique=True, nullable=True, index=True)
+
+    # Document info (not unique - same invoice can have multiple lines)
+    doc_no = Column(String, nullable=False, index=True)
     doc_date = Column(Date, nullable=False, index=True)
     overdue_date = Column(Date, nullable=True)
 
