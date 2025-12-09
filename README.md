@@ -20,7 +20,10 @@ hitai-bplan/
 │   ├── main.py                    # FastAPI application entry point
 │   ├── api/
 │   │   └── v1/
-│   │       └── router.py          # API routes (sync endpoint)
+│   │       ├── router.py          # API routes (income, expenses, sync)
+│   │       └── schemas/           # Pydantic schemas for request/response
+│   │           ├── expenses.py    # Expense response schemas
+│   │           └── income.py      # Income response schemas
 │   ├── models/                    # SQLAlchemy database models
 │   │   ├── expenses.py            # Expense and ExpenseCategory models
 │   │   ├── income.py              # Income model
@@ -114,10 +117,137 @@ The API will be available at:
 - `GET /health` - Health check endpoint for monitoring
 
 ### Data Sync
-- `POST /api/sync` - Sync data from Google Sheets to local database
+- `POST /api/v1/sync` - Sync data from Google Sheets to local database
   - Syncs income, expenses, and pending investments
   - Returns summary with counts of inserted/updated/skipped records
   - Calculates total income, expenses, and net position
+
+### Income
+- `GET /api/v1/income` - List all income records with optional filters
+  - **Query Parameters:**
+    - `start_date` (optional, format: DD/MM/YYYY) - Filter records from this date (inclusive)
+    - `end_date` (optional, format: DD/MM/YYYY) - Filter records until this date (inclusive)
+    - `location` (optional, string) - Filter by exact location match
+  - **Response:** JSON with total count, list of income records, and applied filters
+  - **Date Format:** European format DD/MM/YYYY (e.g., 25/12/2025)
+  - **Example:**
+    ```bash
+    # Get all income
+    curl http://localhost:8000/api/v1/income
+    
+    # Filter by date range (DD/MM/YYYY format)
+    curl "http://localhost:8000/api/v1/income?start_date=01/12/2025&end_date=31/12/2025"
+    
+    # Filter by location
+    curl "http://localhost:8000/api/v1/income?location=Bkk"
+    
+    # Combine filters
+    curl "http://localhost:8000/api/v1/income?start_date=01/12/2025&location=Bkk"
+    ```
+
+### Expenses
+- `GET /api/v1/expenses` - List all expense records with optional filters
+  - **Query Parameters:**
+    - `start_date` (optional, format: DD/MM/YYYY) - Filter records from this date (inclusive)
+    - `end_date` (optional, format: DD/MM/YYYY) - Filter records until this date (inclusive)
+    - `location` (optional, string) - Filter by exact location match
+  - **Response:** JSON with total count, list of expense records, and applied filters
+  - **Date Format:** European format DD/MM/YYYY (e.g., 25/12/2025)
+  - **Example:**
+    ```bash
+    # Get all expenses
+    curl http://localhost:8000/api/v1/expenses
+    
+    # Filter by date range (DD/MM/YYYY format)
+    curl "http://localhost:8000/api/v1/expenses?start_date=01/12/2025&end_date=31/12/2025"
+    
+    # Filter by location
+    curl "http://localhost:8000/api/v1/expenses?location=Pattaya"
+    
+    # Combine filters
+    curl "http://localhost:8000/api/v1/expenses?start_date=01/12/2025&location=Pattaya"
+    ```
+
+### Reports
+
+#### Profit & Loss (P&L) Report
+- `GET /api/v1/reports/pnl` - Generate P&L report with breakdown by customer and categories
+  - **Query Parameters:**
+    - `start_date` (required, format: DD/MM/YYYY) - Start date for report
+    - `end_date` (required, format: DD/MM/YYYY) - End date for report (max 12 months from start_date)
+    - `format` (required) - Report format: `yearly` or `monthly`
+    - `location` (optional, string) - Filter by location (use 'All' or leave empty for all locations)
+  - **Date Format:** European format DD/MM/YYYY (e.g., 25/12/2025)
+  - **Date Range Limit:** Maximum 12 months between start_date and end_date
+  - **P&L Structure:**
+    - **Revenue**: Broken down by customer with totals
+    - **COGS**: Cost of Goods Sold, grouped by category → subcategory
+    - **Gross Profit**: Revenue - COGS
+    - **Operating Expenses (OPEX)**: Grouped by category → subcategory
+    - **EBIT**: Earnings Before Interest and Taxes (Gross Profit - OPEX)
+    - **Income Tax**: 15% of EBIT (0 if EBIT is negative)
+    - **Net Earnings**: EBIT - Income Tax
+  - **Format Options:**
+    - `yearly`: Single "Total" column summing the entire period
+    - `monthly`: One column per month (e.g., nov-25, dec-25)
+  - **Notes:**
+    - All amounts use base values (without VAT)
+    - CAPEX expenses are NOT included in P&L
+    - Only COGS and OPEX expenses are included
+  - **Example:**
+    ```bash
+    # Yearly P&L for all locations
+    curl "http://localhost:8000/api/v1/reports/pnl?start_date=01/01/2025&end_date=31/12/2025&format=yearly"
+    
+    # Monthly P&L for specific location
+    curl "http://localhost:8000/api/v1/reports/pnl?start_date=01/11/2025&end_date=31/12/2025&format=monthly&location=Bkk"
+    
+    # Quarterly P&L (Sep-Nov 2024)
+    curl "http://localhost:8000/api/v1/reports/pnl?start_date=01/09/2024&end_date=30/11/2024&format=monthly"
+    ```
+
+#### Cashflow Report
+- `GET /api/v1/reports/cashflow` - Generate cashflow report with inflows and outflows
+  - **Query Parameters:**
+    - `start_date` (required, format: DD/MM/YYYY) - Start date for report
+    - `end_date` (required, format: DD/MM/YYYY) - End date for report (max 12 months from start_date)
+    - `format` (required) - Report format: `yearly` or `monthly`
+    - `location` (optional, string) - Filter by location (use 'All' or leave empty for all locations)
+    - `opening_balance` (optional, float) - Opening cash balance (default: 0.0)
+  - **Date Format:** European format DD/MM/YYYY (e.g., 25/12/2025)
+  - **Date Range Limit:** Maximum 12 months between start_date and end_date
+  - **Cashflow Structure:**
+    - **Cash Inflows**: 
+      - Sales Income (with VAT)
+      - Fundings (placeholder for future)
+      - Other Income (placeholder for future)
+      - Total Inflows
+    - **Cash Outflows**: 
+      - COGS: Cost of Goods Sold grouped by category → subcategory
+      - OPEX: Operating Expenses grouped by category → subcategory
+      - CAPEX: Capital Expenses grouped by category → subcategory
+      - Total Outflows
+    - **Net Cashflow**: Total Inflows - Total Outflows
+    - **Opening Balance**: Starting cash position
+    - **Closing Balance**: Opening Balance + Net Cashflow
+  - **Format Options:**
+    - `yearly`: Single "Total" column summing the entire period
+    - `monthly`: One column per month with cumulative balances (each month's closing becomes next month's opening)
+  - **Notes:**
+    - All amounts use grand_total (including VAT) - different from P&L
+    - CAPEX is included in cashflow (unlike P&L which only shows COGS and OPEX)
+    - For monthly format, balances are calculated cumulatively across periods
+  - **Example:**
+    ```bash
+    # Yearly cashflow for all locations
+    curl "http://localhost:8000/api/v1/reports/cashflow?start_date=01/01/2025&end_date=31/12/2025&format=yearly"
+    
+    # Monthly cashflow with opening balance
+    curl "http://localhost:8000/api/v1/reports/cashflow?start_date=01/11/2025&end_date=31/12/2025&format=monthly&opening_balance=50000"
+    
+    # Cashflow for specific location
+    curl "http://localhost:8000/api/v1/reports/cashflow?start_date=01/09/2024&end_date=31/08/2025&format=monthly&location=Bkk"
+    ```
 
 ### Development
 - `GET /test-exceptions?exception_type={type}` - Test exception handling (development only)

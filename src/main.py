@@ -8,6 +8,7 @@ from fastapi import FastAPI
 from .core.shared.exceptions_handler import setup_exception_handlers
 from .core.db import init_db
 from src.api.v1.router import router
+from src.api.v1.reports.routes import router as reports_router
 
 load_dotenv()
 
@@ -73,6 +74,7 @@ async def health_check():
 
 # Routers
 app.include_router(router)
+app.include_router(reports_router)
 
 # Error handling verification endpoint (development only)
 if os.getenv("ENV", "development") == "development":
