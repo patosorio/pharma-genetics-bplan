@@ -59,6 +59,7 @@ async def root():
         "message": "Welcome to Hi Tai Business Plan Dashboard API",
         "docs": "/docs" if os.getenv("ENV", "development") == "development" else "Documentation disabled in production",
         "health": "/health",
+        "dashboard": "/dashboard"
     }
 
 # Health check and utility endpoints
@@ -75,6 +76,9 @@ async def health_check():
 # Routers
 app.include_router(router)
 app.include_router(reports_router)
+
+# Import dashboard to mount Dash app
+import dashboard  # noqa: F401
 
 # Error handling verification endpoint (development only)
 if os.getenv("ENV", "development") == "development":
